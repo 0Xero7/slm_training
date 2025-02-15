@@ -1,0 +1,155 @@
+Epoch 1/20
+Train Loss: 7.4976 - Train Perplexity: 1803.70
+Valid Loss: 6.6384 - Valid Perplexity: 763.86
+Time: 122.57s - LR: 9.94e-05
+Epoch 2/20:   0%|                                                                                              | 0/935 [00:00<?, ?it/s]/workspace/train.py:381: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast():
+Epoch 2/20: 100%|███████████████████████████████████████████████████████████████████████| 935/935 [01:10<00:00, 13.24it/s, loss=6.3381]
+Validation: 100%|█████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 41.12it/s, val_loss=2.2583]
+
+Epoch 2/20
+Train Loss: 6.4938 - Train Perplexity: 661.02
+Valid Loss: 6.2336 - Valid Perplexity: 509.60
+Time: 70.60s - LR: 9.78e-05
+Epoch 3/20: 100%|███████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.13it/s, loss=6.1393]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 41.00it/s, val_loss=2.1209]
+
+Epoch 3/20
+Train Loss: 6.2167 - Train Perplexity: 501.06
+Valid Loss: 6.0232 - Valid Perplexity: 412.91
+Time: 71.22s - LR: 9.51e-05
+Epoch 4/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.09it/s, loss=6.0699]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.89it/s, val_loss=2.0123]
+
+Epoch 4/20
+Train Loss: 6.0434 - Train Perplexity: 421.31
+Valid Loss: 5.8761 - Valid Perplexity: 356.40
+Time: 71.41s - LR: 9.14e-05
+Epoch 5/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.07it/s, loss=5.9014]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.53it/s, val_loss=1.9488]
+
+Epoch 5/20
+Train Loss: 5.9190 - Train Perplexity: 372.03
+Valid Loss: 5.7667 - Valid Perplexity: 319.48
+Time: 71.54s - LR: 8.68e-05
+Epoch 6/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.03it/s, loss=5.8903]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.88it/s, val_loss=1.8763]
+
+Epoch 6/20
+Train Loss: 5.8252 - Train Perplexity: 338.73
+Valid Loss: 5.6829 - Valid Perplexity: 293.80
+Time: 71.76s - LR: 8.15e-05
+Epoch 7/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.09it/s, loss=5.7207]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.87it/s, val_loss=1.8463]
+
+Epoch 7/20
+Train Loss: 5.7504 - Train Perplexity: 314.30
+Valid Loss: 5.6168 - Valid Perplexity: 275.01
+Time: 71.43s - LR: 7.54e-05
+Epoch 8/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.6158]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.88it/s, val_loss=1.8189]
+
+Epoch 8/20
+Train Loss: 5.6892 - Train Perplexity: 295.65
+Valid Loss: 5.5608 - Valid Perplexity: 260.02
+Time: 71.46s - LR: 6.89e-05
+Epoch 9/20: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.06it/s, loss=5.5915]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.50it/s, val_loss=1.8144]
+
+Epoch 9/20
+Train Loss: 5.6371 - Train Perplexity: 280.65
+Valid Loss: 5.5149 - Valid Perplexity: 248.37
+Time: 71.62s - LR: 6.20e-05
+Epoch 10/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.5028]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.80it/s, val_loss=1.7774]
+
+Epoch 10/20
+Train Loss: 5.5931 - Train Perplexity: 268.56
+Valid Loss: 5.4771 - Valid Perplexity: 239.14
+Time: 71.47s - LR: 5.50e-05
+Epoch 11/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.6033]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.77it/s, val_loss=1.7598]
+
+Epoch 11/20
+Train Loss: 5.5552 - Train Perplexity: 258.59
+Valid Loss: 5.4447 - Valid Perplexity: 231.53
+Time: 71.46s - LR: 4.80e-05
+Epoch 12/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.06it/s, loss=5.4733]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 39.38it/s, val_loss=1.7789]
+
+Epoch 12/20
+Train Loss: 5.5241 - Train Perplexity: 250.65
+Valid Loss: 5.4172 - Valid Perplexity: 225.24
+Time: 71.58s - LR: 4.11e-05
+Epoch 13/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.06it/s, loss=5.3724]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.76it/s, val_loss=1.7687]
+
+Epoch 13/20
+Train Loss: 5.4979 - Train Perplexity: 244.18
+Valid Loss: 5.3951 - Valid Perplexity: 220.33
+Time: 71.58s - LR: 3.46e-05
+Epoch 14/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.07it/s, loss=5.4836]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.88it/s, val_loss=1.7700]
+
+Epoch 14/20
+Train Loss: 5.4758 - Train Perplexity: 238.85
+Valid Loss: 5.3768 - Valid Perplexity: 216.32
+Time: 71.55s - LR: 2.85e-05
+Epoch 15/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.4812]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.79it/s, val_loss=1.7735]
+
+Epoch 15/20
+Train Loss: 5.4576 - Train Perplexity: 234.52
+Valid Loss: 5.3634 - Valid Perplexity: 213.45
+Time: 71.46s - LR: 2.32e-05
+Epoch 16/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.4512]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 41.01it/s, val_loss=1.7573]
+
+Epoch 16/20
+Train Loss: 5.4431 - Train Perplexity: 231.16
+Valid Loss: 5.3503 - Valid Perplexity: 210.67
+Time: 71.50s - LR: 1.86e-05
+Epoch 17/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.3780]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.83it/s, val_loss=1.7563]
+
+Epoch 17/20
+Train Loss: 5.4319 - Train Perplexity: 228.58
+Valid Loss: 5.3408 - Valid Perplexity: 208.68
+Time: 71.47s - LR: 1.49e-05
+Epoch 18/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.10it/s, loss=5.4247]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.89it/s, val_loss=1.7567]
+
+Epoch 18/20
+Train Loss: 5.4222 - Train Perplexity: 226.39
+Valid Loss: 5.3350 - Valid Perplexity: 207.47
+Time: 71.40s - LR: 1.22e-05
+Epoch 19/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.08it/s, loss=5.4129]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.87it/s, val_loss=1.7587]
+
+Epoch 19/20
+Train Loss: 5.4153 - Train Perplexity: 224.82
+Valid Loss: 5.3286 - Valid Perplexity: 206.15
+Time: 71.51s - LR: 1.06e-05
+Epoch 20/20: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████| 935/935 [01:11<00:00, 13.09it/s, loss=5.3989]
+Validation: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:00<00:00, 40.85it/s, val_loss=1.7636]
+
+Epoch 20/20
+Train Loss: 5.4095 - Train Perplexity: 223.52
+Valid Loss: 5.3239 - Valid Perplexity: 205.18
+Time: 71.42s - LR: 1.00e-05
+/workspace/train.py:459: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  checkpoint = torch.load('best_model.pt')
+
+Loaded best model with validation loss: 5.3239
+Testing:   0%|                                                                                                                               | 0/21 [00:00<?, ?it/s]/workspace/train.py:483: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast():
+Testing: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 21/21 [00:00<00:00, 32.36it/s]
+
+Test Results:
+Test Loss: 5.3181
+Test Perplexity: 204.00
+
+--- Generated Text ---
+India is a large county of the National Register of the city 's main campus . 
+
+ with the largest city of Michigan State , the University , including the local schools and a multi @-@ protected two @-@ country galleries . 

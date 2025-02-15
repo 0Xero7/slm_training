@@ -1,20 +1,61 @@
 # generate.py
 import torch
-from transformers import AutoTokenizer
-
-# Import model architecture components (must match training code)
-import math
 import torch.nn as nn
+import torch.nn.functional as F
+from transformers import AutoTokenizer
+from TripletAttention import TripletAttention  # Import your existing implementation
 
-import TripletAttention as ta
-import ClassicalMHA as cm
+# class TransformerBlock(torch.nn.Module):
+#     def __init__(self, d_model, ff_hidden, dropout=0.3):
+#         super().__init__()
+#         self.attn = TripletAttention(d_model, dropout=dropout)
+#         self.norm1 = torch.nn.LayerNorm(d_model)
+#         self.ff = torch.nn.Sequential(
+#             torch.nn.Linear(d_model, ff_hidden),
+#             torch.nn.GELU(),
+#             torch.nn.Dropout(dropout),
+#             torch.nn.Linear(ff_hidden, d_model)
+#         )
+#         self.norm2 = torch.nn.LayerNorm(d_model)
+#         self.dropout = torch.nn.Dropout(dropout)
 
+#     def forward(self, x):
+#         attn_out = self.attn(x)
+#         x = self.norm1(x + self.dropout(attn_out))
+#         ff_out = self.ff(x)
+#         return self.norm2(x + self.dropout(ff_out))
+
+# class LanguageModel(torch.nn.Module):
+#     def __init__(self, vocab_size, d_model=512, num_layers=12, 
+#                  ff_hidden=2048, max_seq_len=128, dropout=0.2):
+#         super().__init__()
+#         self.token_embed = torch.nn.Embedding(vocab_size, d_model)
+#         self.pos_embed = torch.nn.Parameter(torch.randn(1, max_seq_len, d_model) * 0.02)
+#         self.layers = torch.nn.ModuleList([
+#             TransformerBlock(d_model, ff_hidden, dropout) 
+#             for _ in range(num_layers)
+#         ])
+#         self.layer_norm = torch.nn.LayerNorm(d_model)
+#         self.lm_head = torch.nn.Linear(d_model, vocab_size)
+#         self.max_seq_len = max_seq_len
+#         self.token_embed.weight = self.lm_head.weight
+
+#     @torch.no_grad()
+#     def generate(self, input_ids, max_new_tokens=50, temperature=0.7):
+#         self.eval()
+#         for _ in range(max_new_tokens):
+#             # Truncate to max_seq_len if needed
+#             x_cond = input_ids[:, -self.max_seq_len:] 
+#             logits = self(x_cond)[:, -1, :] / temperature
+#             probs = torch.nn.functional.softmax(logits, dim=-1)
+#             input_ids = torch.cat([input_ids, torch.multinomial(probs, 1)], dim=-1)
+#         return input_ids
 
 
 class TransformerBlock(nn.Module):
     def __init__(self, d_model, ff_hidden, dropout=0.3):
         super().__init__()
-        self.attn = ta.TripletAttention(d_model, dropout=dropout)       #    60 epoch = 154/247     // 20 epoch = 316.87, 272, 187.12
+        self.attn = TripletAttention(d_model, dropout=dropout)       #    60 epoch = 154/247     // 20 epoch = 316.87, 272, 187.12
         # self.attn = cm.ClassicalMHA(d_model, dropout=dropout)        #    60 epoch = 164/268     // 20 epoch = 333.47, 299, 204.00
         self.norm1 = nn.LayerNorm(d_model)
         self.ff = nn.Sequential(
@@ -87,36 +128,38 @@ class LanguageModel(nn.Module):
             input_ids = torch.cat([input_ids, next_token], dim=1)
         return input_ids
 
-
-# Load model and tokenizer
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-tokenizer = AutoTokenizer.from_pretrained("gpt2")
-if tokenizer.pad_token is None:
+def load_model_and_tokenizer():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    
+    model = LanguageModel(
+        vocab_size=len(tokenizer),
+        d_model=512,
+        num_layers=12,
+        ff_hidden=2048,
+        max_seq_len=128,
+        dropout=0.2
+    ).to(device)
+    
+    checkpoint = torch.load("best_model.pt", map_location=device, weights_only=True)
+    
+    # Remove '_orig_mod.' prefix from compiled model keys
+    fixed_state_dict = {}
+    for k, v in checkpoint['model_state_dict'].items():
+        fixed_state_dict[k.replace('_orig_mod.', '')] = v
+    
+    model.load_state_dict(fixed_state_dict)
+    model.eval()
+    return model, tokenizer
 
-# Initialize model with correct parameters
-model = LanguageModel(
-    vocab_size=len(tokenizer),
-    d_model=128,
-    num_layers=8,
-    ff_hidden=256,
-    max_seq_len=128,
-    dropout=0.2
-).to(device)
-
-# Load saved weights
-checkpoint = torch.load('checkpoints/experimental_200k_20epoch_checkpoint.pt', map_location=device, weights_only=True)
-model.load_state_dict(checkpoint['model_state_dict'])
-model.eval()
-
-# Generation function
-def generate_text(prompt, max_length=50, temperature=0.7):
-    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-    generated = model.generate(input_ids, max_new_tokens=max_length, temperature=temperature)
+def generate_text(prompt, max_length=50, temperature=0.8):
+    model, tokenizer = load_model_and_tokenizer()
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.lm_head.weight.device)
+    generated = model.generate(inputs.input_ids, 
+                             max_new_tokens=max_length,
+                             temperature=temperature)
     return tokenizer.decode(generated[0], skip_special_tokens=True)
 
-# Example usage
 if __name__ == "__main__":
-    prompt = "India is a"
-    print("--- Generated Text ---")
-    print(generate_text(prompt))
+    print(generate_text("The meaning of life is"))

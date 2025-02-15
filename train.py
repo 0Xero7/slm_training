@@ -141,11 +141,11 @@ class LanguageModel(nn.Module):
 #                                                 HYPER PARAMETERS
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 max_seq_len = 128
-d_model = 256
-num_layers = 10
-ff_hidden = 1024
+d_model = 512
+num_layers = 12
+ff_hidden = 2048
 lr = 1e-4  # Reduced learning rate
-num_epochs = 20
+num_epochs = 100
 batch_size = 128
 grad_clip = 0.5  # Add gradient clipping
 weight_decay = 0.01  # Reduced weight decay
@@ -159,7 +159,7 @@ torch.backends.cudnn.benchmark = True
 dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
 # For demonstration, we use a subset of the training and validation splits.
 print(len(dataset["validation"]["text"]))
-train_texts = dataset["train"]["text"][:200_000]  # adjust size as needed
+train_texts = dataset["train"]["text"][:500_000]  # adjust size as needed
 valid_texts = dataset["validation"]["text"][:5000]
 
 # Remove empty or very short lines.

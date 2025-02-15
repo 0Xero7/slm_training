@@ -5,9 +5,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 class TripletAttention(nn.Module):
-    def __init__(self, d_model, num_heads=1, dropout=0.1):
+    def __init__(self, d_model, num_heads=4, dropout=0.1):
         super().__init__()
-        print("[Using triplet attention]")
+        print(f"[Using triplet attention]. {d_model=}, {num_heads=}, {dropout=}")
         self.d_model = d_model
         self.num_heads = num_heads
         self.head_dim = d_model // num_heads

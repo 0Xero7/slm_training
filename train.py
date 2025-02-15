@@ -142,7 +142,7 @@ class LanguageModel(nn.Module):
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 max_seq_len = 128
 d_model = 256
-num_layers = 8
+num_layers = 10
 ff_hidden = 1024
 lr = 1e-4  # Reduced learning rate
 num_epochs = 20

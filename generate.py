@@ -77,7 +77,7 @@ class TransformerBlock(nn.Module):
         return x
 
 class LanguageModel(nn.Module):
-    def __init__(self, vocab_size, d_model=256, num_layers=4, ff_hidden=512, max_seq_len=256, dropout=0.1):
+    def __init__(self, vocab_size, d_model=256, num_layers=4, ff_hidden=512, max_seq_len=256, dropout=0.3):
         super().__init__()
         # Increase dropout significantly
         self.emb_dropout = nn.Dropout(0.3)  # New embedding dropout
@@ -142,7 +142,7 @@ def load_model_and_tokenizer():
         dropout=0.2
     ).to(device)
     
-    checkpoint = torch.load("best_model.pt", map_location=device, weights_only=True)
+    checkpoint = torch.load("checkpoints/experimental_full_25epoch.pt", map_location=device, weights_only=True)
     
     # Remove '_orig_mod.' prefix from compiled model keys
     fixed_state_dict = {}
@@ -153,7 +153,7 @@ def load_model_and_tokenizer():
     model.eval()
     return model, tokenizer
 
-def generate_text(prompt, max_length=50, temperature=0.8):
+def generate_text(prompt, max_length=2, temperature=0.6):
     model, tokenizer = load_model_and_tokenizer()
     inputs = tokenizer(prompt, return_tensors="pt").to(model.lm_head.weight.device)
     generated = model.generate(inputs.input_ids, 
@@ -162,4 +162,4 @@ def generate_text(prompt, max_length=50, temperature=0.8):
     return tokenizer.decode(generated[0], skip_special_tokens=True)
 
 if __name__ == "__main__":
-    print(generate_text("The meaning of life is"))
+    print(generate_text("The color of the sky is"))

@@ -145,7 +145,7 @@ d_model = 512
 num_layers = 12
 ff_hidden = 2048
 lr = 1e-4  # Reduced learning rate
-num_epochs = 100
+num_epochs = 30
 batch_size = 128
 grad_clip = 0.5  # Add gradient clipping
 weight_decay = 0.01  # Reduced weight decay
@@ -159,8 +159,8 @@ torch.backends.cudnn.benchmark = True
 dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
 # For demonstration, we use a subset of the training and validation splits.
 print(len(dataset["validation"]["text"]))
-train_texts = dataset["train"]["text"][:500_000]  # adjust size as needed
-valid_texts = dataset["validation"]["text"][:5000]
+train_texts = dataset["train"]["text"]  # adjust size as needed
+valid_texts = dataset["validation"]["text"]
 
 # Remove empty or very short lines.
 train_texts = [t for t in train_texts if len(t) > 20]

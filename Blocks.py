@@ -87,14 +87,14 @@ class TransformerBlock(nn.Module):
         return x
 
 class LanguageModel(nn.Module):
-    def __init__(self, vocab_size, d_model=256, num_layers=4, ff_hidden=512, max_seq_len=256, dropout=0.1):
+    def __init__(self, vocab_size, d_model=256, num_layers=4, ff_hidden=512, max_seq_len=256, dropout=0.1, use_experimental=True):
         super().__init__()
         # Increase dropout significantly
         self.emb_dropout = nn.Dropout(0.3)  # New embedding dropout
         self.token_embed = nn.Embedding(vocab_size, d_model)
         self.pos_embed = nn.Parameter(torch.randn(1, max_seq_len, d_model) * 0.02)
         self.layers = nn.ModuleList([
-            TransformerBlock(d_model, ff_hidden, dropout=dropout) for _ in range(num_layers)
+            TransformerBlock(d_model, ff_hidden, dropout=dropout, use_experimental=use_experimental) for _ in range(num_layers)
         ])
         self.layer_norm = nn.LayerNorm(d_model)  # Add final layer norm
         self.lm_head = nn.Linear(d_model, vocab_size)

@@ -10,6 +10,7 @@ from torch.cuda.amp import autocast, GradScaler
 from tqdm.auto import tqdm
 from datasets import load_dataset
 from transformers import AutoTokenizer
+import datetime
 
 # import EnchancedTextDataset
 import WikiText103Loader as wiki
@@ -29,13 +30,15 @@ num_epochs = 30
 batch_size = 128
 grad_clip = 0.5  # Add gradient clipping
 weight_decay = 0.01  # Reduced weight decay
+use_experimental = True
 
 torch.backends.cudnn.benchmark = True
 
 # ---------------------------
 # Data Preparation using WikiText-103
 # ---------------------------
-tokenizer, vocab_size, train_dataset, valid_dataset, tokenize_texts, TextDatasetOld, collate_fn, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
+# tokenizer, vocab_size, train_dataset, valid_dataset, tokenize_texts, TextDatasetOld, collate_fn, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
+tokenizer, vocab_size, train_dataset, valid_dataset, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
 
 # ---------------------------
 # Instantiate Model, Optimizer, and Loss
@@ -47,7 +50,8 @@ model = LanguageModel(
     num_layers=num_layers,
     ff_hidden=ff_hidden,
     max_seq_len=max_seq_len,
-    dropout=0.2  # Slightly reduced dropout
+    dropout=0.2,  # Slightly reduced dropout
+    use_experimental=use_experimental
 ).to(device)
 
 # Optimizer setup
@@ -70,9 +74,26 @@ criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
 # Add this before the training loop
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=lr/10)
 
+log_file = open(f'logs/{datetime.datetime.now()}.log', 'a')
 model_parameters = filter(lambda p: p.requires_grad, model.parameters())
 params = sum([np.prod(p.size()) for p in model_parameters])
 print(params)
+log_file.writelines([
+    f'\nuse_experimental: {use_experimental}',
+    f'\n--------------------------------------------------------------------------------',
+    f'\nmax_seq_len: {max_seq_len}',
+    f'\nd_model: {d_model}',
+    f'\nnum_layers: {num_layers}',
+    f'\nff_hidden: {ff_hidden}',
+    f'\nlr: {lr}',
+    f'\nnum_epochs: {num_epochs}',
+    f'\nbatch_size: {batch_size}',
+    f'\ngrad_clip: {grad_clip}',
+    f'\nweight_decay: {weight_decay}',
+    f'\n--------------------------------------------------------------------------------',
+    f'\nModel Parameter Count: {params}'
+])
+log_file.flush()
 
 torch.set_float32_matmul_precision('high')
 model = torch.compile(model)
@@ -93,7 +114,8 @@ for epoch in range(num_epochs):
     # ------------------------------------------------------------------------------------------------------------------------------
     pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}')
     for batch in pbar:
-        batch = batch.to(device)
+        # batch = batch.to(device)
+        batch = batch["input_ids"].to(device, non_blocking=True)
         optimizer.zero_grad(set_to_none=True)  # More efficient than zero_grad()
         
         # Forward pass with autocast
@@ -127,6 +149,14 @@ for epoch in range(num_epochs):
     perplexity = math.exp(avg_loss)
     elapsed = time.time() - start
     
+    log_file.writelines([
+        f'\n--------------------------------------------------------------------------------',
+        f'\nEpoch: {epoch + 1}/{num_epochs}',
+        f'\nTime Taken: {elapsed:.2f}s - LR: {scheduler.get_last_lr()[0]:.2e}',
+        f'\nTrain Loss: {avg_loss:.4f} - Train Perplexity: {perplexity:.2f}'
+    ])
+    log_file.flush()
+    
     # ------------------------------------------------------------------------------------------------------------------------------
     #                                                       Validation loop
     # ------------------------------------------------------------------------------------------------------------------------------
@@ -136,7 +166,7 @@ for epoch in range(num_epochs):
     
     with torch.no_grad():
         for batch in val_pbar:
-            batch = batch.to(device)
+            batch = batch["input_ids"].to(device)
             with torch.amp.autocast('cuda'):
                 logits = model(batch)
                 logits = logits[:, :-1, :].contiguous()
@@ -166,6 +196,11 @@ for epoch in range(num_epochs):
         patience_counter += 1
     
     # Print epoch summary
+    log_file.writelines([
+        f"\nValid Loss: {avg_val_loss:.4f} - Valid Perplexity: {val_perplexity:.2f}"  
+    ])
+    log_file.flush()
+
     print(f"\nEpoch {epoch+1}/{num_epochs}")
     print(f"Train Loss: {avg_loss:.4f} - Train Perplexity: {perplexity:.2f}")
     print(f"Valid Loss: {avg_val_loss:.4f} - Valid Perplexity: {val_perplexity:.2f}")
@@ -181,69 +216,69 @@ checkpoint = torch.load('best_model.pt')
 model.load_state_dict(checkpoint['model_state_dict'])
 print(f"\nLoaded best model with validation loss: {checkpoint['loss']:.4f}")
 
-def evaluate_on_wikitext103_test():
-    dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
-    test_texts = dataset["test"]["text"]
+# def evaluate_on_wikitext103_test():
+#     dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
+#     test_texts = dataset["test"]["text"]
     
-    test_texts = [t for t in test_texts if len(t) > 20]
-    test_input_ids = tokenize_texts(test_texts)
+#     test_texts = [t for t in test_texts if len(t) > 20]
+#     test_input_ids = tokenize_texts(test_texts)
     
-    test_dataset = TextDatasetOld(test_input_ids)
-    test_loader = DataLoader(test_dataset, 
-                           batch_size=batch_size, 
-                           shuffle=False, 
-                           collate_fn=collate_fn)
+#     test_dataset = TextDatasetOld(test_input_ids)
+#     test_loader = DataLoader(test_dataset, 
+#                            batch_size=batch_size, 
+#                            shuffle=False, 
+#                            collate_fn=collate_fn)
     
-    model.eval()
-    total_loss = 0.0
-    total_tokens = 0
+#     model.eval()
+#     total_loss = 0.0
+#     total_tokens = 0
     
-    with torch.no_grad():
-        for batch in tqdm(test_loader, desc='Testing'):
-            batch = batch.to(device)
-            with autocast():
-                logits = model(batch)
-                logits = logits[:, :-1, :].contiguous()
-                targets = batch[:, 1:].contiguous()
+#     with torch.no_grad():
+#         for batch in tqdm(test_loader, desc='Testing'):
+#             batch = batch.to(device)
+#             with autocast():
+#                 logits = model(batch)
+#                 logits = logits[:, :-1, :].contiguous()
+#                 targets = batch[:, 1:].contiguous()
                 
-                # Create mask to exclude padding tokens
-                non_pad_mask = targets != 50256  # Exclude <|endoftext|> tokens
+#                 # Create mask to exclude padding tokens
+#                 non_pad_mask = targets != 50256  # Exclude <|endoftext|> tokens
                 
-                # Only calculate loss on non-padding tokens
-                logits_flat = logits.view(-1, vocab_size)
-                targets_flat = targets.view(-1)
-                mask_flat = non_pad_mask.view(-1)
+#                 # Only calculate loss on non-padding tokens
+#                 logits_flat = logits.view(-1, vocab_size)
+#                 targets_flat = targets.view(-1)
+#                 mask_flat = non_pad_mask.view(-1)
                 
-                # Get only the relevant logits and targets
-                logits_filtered = logits_flat[mask_flat]
-                targets_filtered = targets_flat[mask_flat]
+#                 # Get only the relevant logits and targets
+#                 logits_filtered = logits_flat[mask_flat]
+#                 targets_filtered = targets_flat[mask_flat]
                 
-                loss = criterion(logits_filtered, targets_filtered)
+#                 loss = criterion(logits_filtered, targets_filtered)
                 
-                # Count number of real tokens
-                num_tokens = mask_flat.sum().item()
+#                 # Count number of real tokens
+#                 num_tokens = mask_flat.sum().item()
                 
-            total_loss += loss.item() * num_tokens
-            total_tokens += num_tokens
+#             total_loss += loss.item() * num_tokens
+#             total_tokens += num_tokens
     
-    avg_loss = total_loss / total_tokens
-    test_perplexity = math.exp(avg_loss)
+#     avg_loss = total_loss / total_tokens
+#     test_perplexity = math.exp(avg_loss)
     
-    print(f"\nTest Results:")
-    print(f"Test Loss: {avg_loss:.4f}")
-    print(f"Test Perplexity: {test_perplexity:.2f}")
+#     print(f"\nTest Results:")
+#     print(f"Test Loss: {avg_loss:.4f}")
+#     print(f"Test Perplexity: {test_perplexity:.2f}")
     
-    return test_perplexity
+#     return test_perplexity
 
-evaluate_on_wikitext103_test()
+# evaluate_on_wikitext103_test()
 
-# ---------------------------
-# Autoregressive Generation
-# ---------------------------
-model.eval()
-prompt = "India is a"
-input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-generated = model.generate(input_ids, max_new_tokens=50, temperature=0.7)
-output_text = tokenizer.decode(generated[0], skip_special_tokens=True)
-print("\n--- Generated Text ---")
-print(output_text)
+# # ---------------------------
+# # Autoregressive Generation
+# # ---------------------------
+# model.eval()
+# prompt = "India is a"
+# input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
+# generated = model.generate(input_ids, max_new_tokens=50, temperature=0.7)
+# output_text = tokenizer.decode(generated[0], skip_special_tokens=True)
+# print("\n--- Generated Text ---")
+# print(output_text)

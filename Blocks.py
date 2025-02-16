@@ -71,8 +71,8 @@ class TransformerBlock(nn.Module):
         self.ff = nn.Sequential(
             nn.Linear(d_model, ff_hidden),
             nn.GELU(),
+            nn.Linear(ff_hidden, d_model),
             nn.Dropout(dropout),
-            nn.Linear(ff_hidden, d_model)
         )
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)

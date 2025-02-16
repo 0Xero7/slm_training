@@ -12,25 +12,51 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 import datetime
 
-# import EnchancedTextDataset
+# Custom imports for your dataset/model modules.
 import WikiText103Loader as wiki
-from Blocks import LanguageModel
+from Blocks import LanguageModel, TransformerBlock
 import TripletAttention as ta
 import ClassicalMHA as cm
 from stopwatch import Stopwatch
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#                                                 HYPER PARAMETERS
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
+
+# -----------------------------------------------------------
+#                CONFIGURABLE PRECISION SETTING
+# -----------------------------------------------------------
+# Options: 'fp8', 'fp16', 'bf16', 'fp32'
+precision = 'bf16'  # Change this to 'fp16', 'bf16', or 'fp32' as desired.
+
+# Map the string to a torch dtype.
+if precision == 'fp8':
+    # Note: fp8 is experimental. Adjust this to match your hardware/driver.
+    # Some environments might require something like torch.float8_e5m2 or torch.float8_e4m3.
+    AUTOCAST_DTYPE = torch.float8_e5m2  # Hypothetical FP8 dtype.
+    MODEL_DTYPE = torch.float8_e5m2
+elif precision == 'fp16':
+    AUTOCAST_DTYPE = torch.float16
+    MODEL_DTYPE = torch.float16
+elif precision == 'bf16':
+    AUTOCAST_DTYPE = torch.bfloat16
+    MODEL_DTYPE = torch.bfloat16
+else:  # fp32
+    AUTOCAST_DTYPE = torch.float32
+    MODEL_DTYPE = torch.float32
+    torch.set_float32_matmul_precision('high')
+
+# -----------------------------------------------------------
+#                      HYPER PARAMETERS
+# -----------------------------------------------------------
 max_seq_len = 128
 d_model = 512
 num_layers = 12
 ff_hidden = 2048
-lr = 1e-4  # Reduced learning rate
+lr = 1e-4  
 num_epochs = 30
 batch_size = 128
-grad_clip = 0.5  # Add gradient clipping
-weight_decay = 0.01  # Reduced weight decay
+grad_clip = 0.5  
+weight_decay = 0.01  
 use_experimental = not True
 
 torch.backends.cudnn.benchmark = True
@@ -38,28 +64,32 @@ torch.backends.cudnn.benchmark = True
 # ---------------------------
 # Data Preparation using WikiText-103
 # ---------------------------
-# tokenizer, vocab_size, train_dataset, valid_dataset, tokenize_texts, TextDatasetOld, collate_fn, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
 tokenizer, vocab_size, train_dataset, valid_dataset, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
 
 # ---------------------------
 # Instantiate Model, Optimizer, and Loss
 # ---------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 model = LanguageModel(
     vocab_size=vocab_size,
     d_model=d_model,
     num_layers=num_layers,
     ff_hidden=ff_hidden,
     max_seq_len=max_seq_len,
-    dropout=0.2,  # Slightly reduced dropout
+    dropout=0.2,
     use_experimental=use_experimental
 ).to(device)
 
-# Optimizer setup
+# Convert model to the desired precision if not fp32.
+# if MODEL_DTYPE != torch.float32:
+#     model = model.to(MODEL_DTYPE)
+
+# Optimizer setup with weight decay grouping.
 decay_params = []
 no_decay_params = []
 for name, param in model.named_parameters():
-    if 'layer_norm' in name or 'bias' in name or 'pos_embed' in name:  # Added pos_embed to no decay
+    if 'layer_norm' in name or 'bias' in name or 'pos_embed' in name:
         no_decay_params.append(param)
     else:
         decay_params.append(param)
@@ -72,7 +102,7 @@ optim_groups = [
 optimizer = torch.optim.AdamW(optim_groups, lr=lr, betas=(0.9, 0.95))
 criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
 
-# Add this before the training loop
+# Scheduler setup.
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=lr/10)
 
 log_file = open(f'logs/{datetime.datetime.now()}.log', 'a')
@@ -91,15 +121,17 @@ log_file.writelines([
     f'\nbatch_size: {batch_size}',
     f'\ngrad_clip: {grad_clip}',
     f'\nweight_decay: {weight_decay}',
+    f'\nPrecision: {precision}',
     f'\n--------------------------------------------------------------------------------',
     f'\nModel Parameter Count: {params}'
 ])
 log_file.flush()
 
-# torch.set_float32_matmul_precision('high')
+# Optionally compile model if desired (requires PyTorch 2.0+)
 model = torch.compile(model)
 
-scaler = torch.amp.GradScaler('cuda')
+# Create GradScaler (assumes GradScaler supports the chosen precision).
+scaler = torch.amp.GradScaler()  # GradScaler works with fp16/bf16; FP8 support is experimental.
 best_val_loss = float('inf')
 patience = 3
 patience_counter = 0
@@ -110,10 +142,6 @@ for epoch in range(num_epochs):
     
     start = time.time()
     
-    # ------------------------------------------------------------------------------------------------------------------------------
-    #                                                       Training loop
-    # ------------------------------------------------------------------------------------------------------------------------------
-
     pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}')
     
     batch_load_timer = Stopwatch()
@@ -123,10 +151,9 @@ for epoch in range(num_epochs):
     backward_pass_timer = Stopwatch()
     optimizer_timer = Stopwatch()
 
-
     batch_load_timer.start()
     for batch in pbar:
-        torch.cuda.synchronize() 
+        torch.cuda.synchronize()
         batch_load_timer.stop()
 
         transfer_timer.start()    
@@ -135,39 +162,34 @@ for epoch in range(num_epochs):
         transfer_timer.stop()
 
         zero_timer.start()
-        optimizer.zero_grad(set_to_none=True)  # More efficient than zero_grad()
-        torch.cuda.synchronize() 
+        optimizer.zero_grad(set_to_none=True)
+        torch.cuda.synchronize()
         zero_timer.stop()
         
-        # Forward pass with autocast
+        # Forward pass with autocast using the selected dtype.
         fwd_pass_timer.start()
-        with torch.amp.autocast('cuda', dtype=torch.float16):
+        with torch.amp.autocast('cuda', dtype=AUTOCAST_DTYPE):
             logits = model(batch)
             logits = logits[:, :-1, :].contiguous().view(-1, vocab_size)
             loss = criterion(logits, targets)
-        torch.cuda.synchronize() 
+        torch.cuda.synchronize()
         fwd_pass_timer.stop()
         
         backward_pass_timer.start()
-        # Backward pass with gradient scaling
         scaler.scale(loss).backward()
-        torch.cuda.synchronize() 
+        torch.cuda.synchronize()
         backward_pass_timer.stop()
 
-        # Unscale before clip
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         
-        # Optimizer and scaler steps
         optimizer_timer.start()
         scaler.step(optimizer)
         scaler.update()
-        torch.cuda.synchronize() 
+        torch.cuda.synchronize()
         optimizer_timer.stop()
         
-        # Update progress bar
         current_loss = loss.item()
-
         total_loss += current_loss * batch.size(0)
         pbar.set_postfix({
             'loss': f'{current_loss:.4f}',
@@ -181,11 +203,8 @@ for epoch in range(num_epochs):
 
         batch_load_timer.start()
         
-    
-    # Step scheduler once per epoch
     scheduler.step()
     
-    # Calculate training metrics
     avg_loss = total_loss / len(train_dataset)
     perplexity = math.exp(avg_loss)
     elapsed = time.time() - start
@@ -198,9 +217,7 @@ for epoch in range(num_epochs):
     ])
     log_file.flush()
     
-    # ------------------------------------------------------------------------------------------------------------------------------
-    #                                                       Validation loop
-    # ------------------------------------------------------------------------------------------------------------------------------
+    # ------------------ Validation Loop ------------------
     model.eval()
     total_val_loss = 0.0
     val_pbar = tqdm(valid_loader, desc='Validation')
@@ -208,7 +225,7 @@ for epoch in range(num_epochs):
     with torch.no_grad():
         for batch in val_pbar:
             batch = batch["input_ids"].to(device)
-            with torch.amp.autocast('cuda'):
+            with torch.amp.autocast('cuda', dtype=AUTOCAST_DTYPE):
                 logits = model(batch)
                 logits = logits[:, :-1, :].contiguous()
                 targets = batch[:, 1:].contiguous()
@@ -216,15 +233,12 @@ for epoch in range(num_epochs):
             total_val_loss += val_loss.item() * batch.size(0)
             val_pbar.set_postfix({'val_loss': f'{val_loss.item():.4f}'})
     
-    # Calculate validation metrics
     avg_val_loss = total_val_loss / len(valid_dataset)
     val_perplexity = math.exp(avg_val_loss)
     
-    # Early stopping check
     if avg_val_loss < best_val_loss:
         best_val_loss = avg_val_loss
         patience_counter = 0
-        # Save best model
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -236,28 +250,63 @@ for epoch in range(num_epochs):
     else:
         patience_counter += 1
     
-    # Print epoch summary
     log_file.writelines([
         f"\nValid Loss: {avg_val_loss:.4f} - Valid Perplexity: {val_perplexity:.2f}"  
     ])
     log_file.flush()
 
     print(f"\nEpoch {epoch+1}/{num_epochs}")
-    print(f"\nTotal batch load time: {batch_load_timer.elapsed()}")
     print(f"Train Loss: {avg_loss:.4f} - Train Perplexity: {perplexity:.2f}")
     print(f"Valid Loss: {avg_val_loss:.4f} - Valid Perplexity: {val_perplexity:.2f}")
     print(f"Time: {elapsed:.2f}s - LR: {scheduler.get_last_lr()[0]:.2e}")
     
-    # Early stopping
     if patience_counter >= patience:
         print(f"\nEarly stopping after {patience} epochs without improvement")
         break
 
-# Load best model at the end
 checkpoint = torch.load('best_model.pt')
 model.load_state_dict(checkpoint['model_state_dict'])
 print(f"\nLoaded best model with validation loss: {checkpoint['loss']:.4f}")
 
+# ------------------ Autoregressive Generation ------------------
+class LanguageModel(nn.Module):
+    def __init__(self, vocab_size, d_model=256, num_layers=4, ff_hidden=512, max_seq_len=256, dropout=0.1, use_experimental=True):
+        super().__init__()
+        self.emb_dropout = nn.Dropout(0.3)
+        self.token_embed = nn.Embedding(vocab_size, d_model)
+        self.pos_embed = nn.Parameter(torch.randn(1, max_seq_len, d_model) * 0.02)
+        self.layers = nn.ModuleList([
+            TransformerBlock(d_model, ff_hidden, dropout=dropout, use_experimental=use_experimental) for _ in range(num_layers)
+        ])
+        self.layer_norm = nn.LayerNorm(d_model)
+        self.lm_head = nn.Linear(d_model, vocab_size)
+        self.max_seq_len = max_seq_len
+
+        self.token_embed.weight = self.lm_head.weight
+        
+    def forward(self, input_ids):
+        B, T = input_ids.size()
+        x = self.token_embed(input_ids)
+        x = self.emb_dropout(x)
+        x = x + self.pos_embed[:, :T, :]
+        for layer in self.layers:
+            x = layer(x)
+        x = self.layer_norm(x)
+        logits = self.lm_head(x)
+        return logits
+
+    @torch.no_grad()
+    def generate(self, input_ids, max_new_tokens=50, temperature=1.0):
+        self.eval()
+        for _ in range(max_new_tokens):
+            x_cond = input_ids if input_ids.size(1) <= self.max_seq_len else input_ids[:, -self.max_seq_len:]
+            logits = self.forward(x_cond)
+            logits_last = logits[:, -1, :] / temperature
+            probs = F.softmax(logits_last, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            input_ids = torch.cat([input_ids, next_token], dim=1)
+        return input_ids
+    
 # def evaluate_on_wikitext103_test():
 #     dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
 #     test_texts = dataset["test"]["text"]

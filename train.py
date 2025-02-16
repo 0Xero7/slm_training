@@ -17,6 +17,7 @@ import WikiText103Loader as wiki
 from Blocks import LanguageModel
 import TripletAttention as ta
 import ClassicalMHA as cm
+from stopwatch import Stopwatch
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #                                                 HYPER PARAMETERS
@@ -30,7 +31,7 @@ num_epochs = 30
 batch_size = 128
 grad_clip = 0.5  # Add gradient clipping
 weight_decay = 0.01  # Reduced weight decay
-use_experimental = True
+use_experimental = not True
 
 torch.backends.cudnn.benchmark = True
 
@@ -95,7 +96,7 @@ log_file.writelines([
 ])
 log_file.flush()
 
-torch.set_float32_matmul_precision('high')
+# torch.set_float32_matmul_precision('high')
 model = torch.compile(model)
 
 scaler = torch.amp.GradScaler('cuda')
@@ -112,34 +113,74 @@ for epoch in range(num_epochs):
     # ------------------------------------------------------------------------------------------------------------------------------
     #                                                       Training loop
     # ------------------------------------------------------------------------------------------------------------------------------
+
     pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs}')
+    
+    batch_load_timer = Stopwatch()
+    transfer_timer = Stopwatch()
+    zero_timer = Stopwatch()
+    fwd_pass_timer = Stopwatch()
+    backward_pass_timer = Stopwatch()
+    optimizer_timer = Stopwatch()
+
+
+    batch_load_timer.start()
     for batch in pbar:
-        # batch = batch.to(device)
+        torch.cuda.synchronize() 
+        batch_load_timer.stop()
+
+        transfer_timer.start()    
         batch = batch["input_ids"].to(device, non_blocking=True)
+        targets = batch[:, 1:].contiguous().view(-1)
+        transfer_timer.stop()
+
+        zero_timer.start()
         optimizer.zero_grad(set_to_none=True)  # More efficient than zero_grad()
+        torch.cuda.synchronize() 
+        zero_timer.stop()
         
         # Forward pass with autocast
-        with torch.amp.autocast('cuda'):
+        fwd_pass_timer.start()
+        with torch.amp.autocast('cuda', dtype=torch.float16):
             logits = model(batch)
-            logits = logits[:, :-1, :].contiguous()
-            targets = batch[:, 1:].contiguous()
-            loss = criterion(logits.view(-1, vocab_size), targets.view(-1))
+            logits = logits[:, :-1, :].contiguous().view(-1, vocab_size)
+            loss = criterion(logits, targets)
+        torch.cuda.synchronize() 
+        fwd_pass_timer.stop()
         
+        backward_pass_timer.start()
         # Backward pass with gradient scaling
         scaler.scale(loss).backward()
-        
+        torch.cuda.synchronize() 
+        backward_pass_timer.stop()
+
         # Unscale before clip
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         
         # Optimizer and scaler steps
+        optimizer_timer.start()
         scaler.step(optimizer)
         scaler.update()
+        torch.cuda.synchronize() 
+        optimizer_timer.stop()
         
         # Update progress bar
         current_loss = loss.item()
+
         total_loss += current_loss * batch.size(0)
-        pbar.set_postfix({'loss': f'{current_loss:.4f}'})
+        pbar.set_postfix({
+            'loss': f'{current_loss:.4f}',
+            'batch_load': f'{batch_load_timer.elapsed():.4f}',
+            'transfer': f'{transfer_timer.elapsed():.4f}',
+            'zero': f'{zero_timer.elapsed():.4f}',
+            'fwd_pass': f'{fwd_pass_timer.elapsed():.4f}',
+            'bck_pass': f'{backward_pass_timer.elapsed():.4f}',
+            'optimizer': f'{optimizer_timer.elapsed():.4f}',
+        })
+
+        batch_load_timer.start()
+        
     
     # Step scheduler once per epoch
     scheduler.step()
@@ -202,6 +243,7 @@ for epoch in range(num_epochs):
     log_file.flush()
 
     print(f"\nEpoch {epoch+1}/{num_epochs}")
+    print(f"\nTotal batch load time: {batch_load_timer.elapsed()}")
     print(f"Train Loss: {avg_loss:.4f} - Train Perplexity: {perplexity:.2f}")
     print(f"Valid Loss: {avg_val_loss:.4f} - Valid Perplexity: {val_perplexity:.2f}")
     print(f"Time: {elapsed:.2f}s - LR: {scheduler.get_last_lr()[0]:.2e}")

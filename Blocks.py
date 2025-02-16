@@ -64,9 +64,9 @@ class TransformerBlock(nn.Module):
     def __init__(self, d_model, ff_hidden, dropout=0.3, use_experimental=True):
         super().__init__()
         if use_experimental:
-            self.attn = ta.TripletAttention(d_model, dropout=dropout)       #    60 epoch = 154/247     // 20 epoch = 316.87, 272, 187.12
+            self.attn = ta.TripletAttention(d_model, dropout=dropout)
         else:
-            self.attn = cm.ClassicalMHA(d_model, dropout=dropout)        #    60 epoch = 164/268     // 20 epoch = 333.47, 299, 204.00
+            self.attn = cm.ClassicalMHA(d_model, dropout=dropout) 
         self.norm1 = nn.LayerNorm(d_model)
         self.ff = nn.Sequential(
             nn.Linear(d_model, ff_hidden),

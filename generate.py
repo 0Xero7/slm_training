@@ -153,7 +153,7 @@ def load_model_and_tokenizer():
     model.eval()
     return model, tokenizer
 
-def generate_text(prompt, max_length=2, temperature=0.6):
+def generate_text(prompt, max_length=50, temperature=1):
     model, tokenizer = load_model_and_tokenizer()
     inputs = tokenizer(prompt, return_tensors="pt").to(model.lm_head.weight.device)
     generated = model.generate(inputs.input_ids, 
@@ -162,4 +162,4 @@ def generate_text(prompt, max_length=2, temperature=0.6):
     return tokenizer.decode(generated[0], skip_special_tokens=True)
 
 if __name__ == "__main__":
-    print(generate_text("The color of the sky is"))
+    print(generate_text("India is"))

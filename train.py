@@ -49,7 +49,7 @@ else:  # fp32
 #                      HYPER PARAMETERS
 # -----------------------------------------------------------
 max_seq_len = 128
-d_model = 512
+d_model = 452
 num_layers = 12
 ff_hidden = 2048
 lr = 1e-4  
@@ -57,7 +57,7 @@ num_epochs = 30
 batch_size = 128
 grad_clip = 0.5  
 weight_decay = 0.01  
-use_experimental = not True
+use_experimental = True
 
 torch.backends.cudnn.benchmark = True
 

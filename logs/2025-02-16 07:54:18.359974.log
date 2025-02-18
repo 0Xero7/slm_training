@@ -1,0 +1,31 @@
+Model Parameter Count: 66829394
+--------------------------------------------------------------------------------
+Epoch: 1/30
+Time Taken: 140.67s - LR: 9.98e-05
+Train Loss: 7.3080 - Train Perplexity: 1492.26
+Valid Loss: 6.5195 - Valid Perplexity: 678.23
+--------------------------------------------------------------------------------
+Epoch: 2/30
+Time Taken: 30.12s - LR: 9.90e-05
+Train Loss: 6.2874 - Train Perplexity: 537.77
+Valid Loss: 6.1203 - Valid Perplexity: 454.99
+--------------------------------------------------------------------------------
+Epoch: 3/30
+Time Taken: 30.09s - LR: 9.78e-05
+Train Loss: 5.9373 - Train Perplexity: 378.93
+Valid Loss: 5.9044 - Valid Perplexity: 366.65
+--------------------------------------------------------------------------------
+Epoch: 4/30
+Time Taken: 30.09s - LR: 9.61e-05
+Train Loss: 5.6978 - Train Perplexity: 298.22
+Valid Loss: 5.7376 - Valid Perplexity: 310.32
+--------------------------------------------------------------------------------
+Epoch: 5/30
+Time Taken: 30.17s - LR: 9.40e-05
+Train Loss: 5.5124 - Train Perplexity: 247.75
+Valid Loss: 5.6131 - Valid Perplexity: 274.00
+--------------------------------------------------------------------------------
+Epoch: 6/30
+Time Taken: 30.13s - LR: 9.14e-05
+Train Loss: 5.3595 - Train Perplexity: 212.62
+Valid Loss: 5.5136 - Valid Perplexity: 248.04

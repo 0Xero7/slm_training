@@ -1,0 +1,39 @@
+
+use_experimental: False
+--------------------------------------------------------------------------------
+max_seq_len: 128
+d_model: 512
+num_layers: 12
+ff_hidden: 2048
+lr: 0.0001
+num_epochs: 30
+batch_size: 128
+grad_clip: 0.5
+weight_decay: 0.01
+--------------------------------------------------------------------------------
+Model Parameter Count: 63677522
+--------------------------------------------------------------------------------
+Epoch: 1/30
+Time Taken: 109.85s - LR: 9.98e-05
+Train Loss: 7.3217 - Train Perplexity: 1512.84
+Valid Loss: 6.5640 - Valid Perplexity: 709.10
+--------------------------------------------------------------------------------
+Epoch: 2/30
+Time Taken: 27.84s - LR: 9.90e-05
+Train Loss: 6.3351 - Train Perplexity: 564.02
+Valid Loss: 6.1782 - Valid Perplexity: 482.10
+--------------------------------------------------------------------------------
+Epoch: 3/30
+Time Taken: 27.88s - LR: 9.78e-05
+Train Loss: 5.9989 - Train Perplexity: 402.99
+Valid Loss: 5.9663 - Valid Perplexity: 390.07
+--------------------------------------------------------------------------------
+Epoch: 4/30
+Time Taken: 27.94s - LR: 9.61e-05
+Train Loss: 5.7698 - Train Perplexity: 320.47
+Valid Loss: 5.8133 - Valid Perplexity: 334.73
+--------------------------------------------------------------------------------
+Epoch: 5/30
+Time Taken: 27.99s - LR: 9.40e-05
+Train Loss: 5.5897 - Train Perplexity: 267.64
+Valid Loss: 5.6972 - Valid Perplexity: 298.04

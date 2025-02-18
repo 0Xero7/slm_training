@@ -1,0 +1,89 @@
+
+use_experimental: True
+--------------------------------------------------------------------------------
+max_seq_len: 128
+d_model: 512
+num_layers: 12
+ff_hidden: 2048
+lr: 0.0001
+num_epochs: 30
+batch_size: 128
+grad_clip: 0.5
+weight_decay: 0.01
+--------------------------------------------------------------------------------
+Model Parameter Count: 66829394
+--------------------------------------------------------------------------------
+Epoch: 1/30
+Time Taken: 137.54s - LR: 9.98e-05
+Train Loss: 7.3110 - Train Perplexity: 1496.67
+Valid Loss: 6.5211 - Valid Perplexity: 679.35
+--------------------------------------------------------------------------------
+Epoch: 2/30
+Time Taken: 30.18s - LR: 9.90e-05
+Train Loss: 6.2903 - Train Perplexity: 539.33
+Valid Loss: 6.1187 - Valid Perplexity: 454.28
+--------------------------------------------------------------------------------
+Epoch: 3/30
+Time Taken: 30.18s - LR: 9.78e-05
+Train Loss: 5.9408 - Train Perplexity: 380.23
+Valid Loss: 5.8995 - Valid Perplexity: 364.87
+--------------------------------------------------------------------------------
+Epoch: 4/30
+Time Taken: 30.23s - LR: 9.61e-05
+Train Loss: 5.7019 - Train Perplexity: 299.44
+Valid Loss: 5.7368 - Valid Perplexity: 310.06
+--------------------------------------------------------------------------------
+Epoch: 5/30
+Time Taken: 30.27s - LR: 9.40e-05
+Train Loss: 5.5150 - Train Perplexity: 248.38
+Valid Loss: 5.6125 - Valid Perplexity: 273.83
+--------------------------------------------------------------------------------
+Epoch: 6/30
+Time Taken: 30.12s - LR: 9.14e-05
+Train Loss: 5.3624 - Train Perplexity: 213.23
+Valid Loss: 5.5156 - Valid Perplexity: 248.55
+--------------------------------------------------------------------------------
+Epoch: 7/30
+Time Taken: 30.05s - LR: 8.84e-05
+Train Loss: 5.2305 - Train Perplexity: 186.90
+Valid Loss: 5.4391 - Valid Perplexity: 230.23
+--------------------------------------------------------------------------------
+Epoch: 8/30
+Time Taken: 30.22s - LR: 8.51e-05
+Train Loss: 5.1170 - Train Perplexity: 166.83
+Valid Loss: 5.3735 - Valid Perplexity: 215.62
+--------------------------------------------------------------------------------
+Epoch: 9/30
+Time Taken: 30.18s - LR: 8.15e-05
+Train Loss: 5.0161 - Train Perplexity: 150.83
+Valid Loss: 5.3199 - Valid Perplexity: 204.36
+--------------------------------------------------------------------------------
+Epoch: 10/30
+Time Taken: 30.15s - LR: 7.75e-05
+Train Loss: 4.9269 - Train Perplexity: 137.96
+Valid Loss: 5.2724 - Valid Perplexity: 194.88
+--------------------------------------------------------------------------------
+Epoch: 11/30
+Time Taken: 30.09s - LR: 7.33e-05
+Train Loss: 4.8471 - Train Perplexity: 127.37
+Valid Loss: 5.2272 - Valid Perplexity: 186.26
+--------------------------------------------------------------------------------
+Epoch: 12/30
+Time Taken: 30.09s - LR: 6.89e-05
+Train Loss: 4.7743 - Train Perplexity: 118.43
+Valid Loss: 5.1915 - Valid Perplexity: 179.74
+--------------------------------------------------------------------------------
+Epoch: 13/30
+Time Taken: 30.17s - LR: 6.44e-05
+Train Loss: 4.7089 - Train Perplexity: 110.93
+Valid Loss: 5.1646 - Valid Perplexity: 174.96
+--------------------------------------------------------------------------------
+Epoch: 14/30
+Time Taken: 30.30s - LR: 5.97e-05
+Train Loss: 4.6494 - Train Perplexity: 104.52
+Valid Loss: 5.1393 - Valid Perplexity: 170.59
+--------------------------------------------------------------------------------
+Epoch: 15/30
+Time Taken: 2506.88s - LR: 5.50e-05
+Train Loss: 4.5958 - Train Perplexity: 99.07
+Valid Loss: 5.1209 - Valid Perplexity: 167.49

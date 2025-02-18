@@ -1,0 +1,24 @@
+
+use_experimental: False
+--------------------------------------------------------------------------------
+max_seq_len: 128
+d_model: 512
+num_layers: 12
+ff_hidden: 2048
+lr: 0.0001
+num_epochs: 30
+batch_size: 128
+grad_clip: 0.5
+weight_decay: 0.01
+--------------------------------------------------------------------------------
+Model Parameter Count: 63677522
+--------------------------------------------------------------------------------
+Epoch: 1/30
+Time Taken: 125.71s - LR: 9.98e-05
+Train Loss: 7.3325 - Train Perplexity: 1529.17
+Valid Loss: 6.5668 - Valid Perplexity: 711.06
+--------------------------------------------------------------------------------
+Epoch: 2/30
+Time Taken: 44.59s - LR: 9.90e-05
+Train Loss: 6.3377 - Train Perplexity: 565.51
+Valid Loss: 6.1821 - Valid Perplexity: 484.00

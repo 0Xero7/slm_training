@@ -128,7 +128,7 @@ log_file.writelines([
 log_file.flush()
 
 # Optionally compile model if desired (requires PyTorch 2.0+)
-model = torch.compile(model)
+# model = torch.compile(model)
 
 # Create GradScaler (assumes GradScaler supports the chosen precision).
 scaler = torch.amp.GradScaler()  # GradScaler works with fp16/bf16; FP8 support is experimental.

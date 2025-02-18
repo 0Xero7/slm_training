@@ -14,6 +14,7 @@ from transformers import AutoTokenizer
 # import EnchancedTextDataset
 import TripletAttention as ta
 import ClassicalMHA as cm
+import STPAttention as sa
 
 # ---------------------------
 # Model Components with Dropout
@@ -64,7 +65,8 @@ class TransformerBlock(nn.Module):
     def __init__(self, d_model, ff_hidden, dropout=0.3, use_experimental=True):
         super().__init__()
         if use_experimental:
-            self.attn = ta.TripletAttention(d_model, dropout=dropout)
+            # self.attn = ta.TripletAttention(d_model, dropout=dropout)
+            self.attn = sa.SPSTPAttention(d_model, dropout=dropout)
         else:
             self.attn = cm.ClassicalMHA(d_model, dropout=dropout) 
         self.norm1 = nn.LayerNorm(d_model)

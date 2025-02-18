@@ -44,7 +44,7 @@ class TripletAttention(nn.Module):
         scores_triplet = torch.matmul(q * t, triplet_cumsum.transpose(-2, -1))
         
         # Combine scores and scale
-        scores = (scores_dot + scores_triplet) * self.scale
+        scores = (scores_dot) * self.scale
         
         # Causal mask
         mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()

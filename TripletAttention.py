@@ -22,7 +22,7 @@ class TripletAttention(nn.Module):
         
         self.dropout = nn.Dropout(dropout)
         # Changed scaling factor to account for both attention terms
-        self.scale = 1.0 / (math.sqrt(self.head_dim) * 2)
+        self.scale = 1.0 / (math.sqrt(self.head_dim))
         
     def forward(self, x):
         B, T, D = x.size()
@@ -35,16 +35,16 @@ class TripletAttention(nn.Module):
         t = self.t_proj(x).view(B, T, H, -1).transpose(1, 2)
         
         # Standard attention scores
-        scores_dot = torch.matmul(q, k.transpose(-2, -1))  # (B, H, T, T)
+        # scores_dot = torch.matmul(q, k.transpose(-2, -1))  # (B, H, T, T)
         
         # Modified triplet interaction to be more stable
         k_v = k * v  # (B, H, T, head_dim)
         k_v = k_v / math.sqrt(self.head_dim)  # Scale to prevent exponential growth
-        # triplet_cumsum = torch.cumsum(k_v, dim=2)  # (B, H, T, head_dim)
-        scores_triplet = torch.matmul(q * t, k_v.transpose(-2, -1))
+        triplet_cumsum = torch.cumsum(k_v, dim=2)  # (B, H, T, head_dim)
+        scores_triplet = torch.matmul(q * t, triplet_cumsum.transpose(-2, -1))
         
         # Combine scores and scale
-        scores = (scores_dot + scores_triplet) * self.scale
+        scores = (scores_triplet) * self.scale
         
         # Causal mask
         mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()

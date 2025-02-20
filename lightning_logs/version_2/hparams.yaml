@@ -1,0 +1,10 @@
+d_model: 492
+dropout: 0.1198855449186538
+ff_hidden: 2048
+lr: 1.3039988259472724e-05
+max_seq_len: 128
+num_epochs: 20
+num_layers: 12
+use_experimental: true
+vocab_size: 50258
+weight_decay: 0.09091141122118358

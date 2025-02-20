@@ -6,3 +6,6 @@ init:
 
 trainsm:
 	/bin/python train.py
+
+trainl:
+	/bin/python train_lightning.py

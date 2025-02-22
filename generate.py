@@ -14,25 +14,24 @@ def load_model_and_tokenizer():
     
     model = LanguageModel(
         vocab_size=len(tokenizer),
-        d_model=400,
+        d_model=768,
         num_layers=12,
         ff_hidden=2048,
         max_seq_len=128,
         dropout=0.2
     ).to(device)
     
-    checkpoint = torch.load("best_model.pt", map_location=device, weights_only=True)
+    checkpoint = torch.load("/workspace/slm_training/lightning_logs/version_5/checkpoints/best_model.ckpt", map_location=device, weights_only=True)
     
     # Remove '_orig_mod.' prefix from compiled model keys
     fixed_state_dict = {}
-    for k, v in checkpoint['model_state_dict'].items():
-        fixed_state_dict[k.replace('_orig_mod.', '')] = v
+    for k, v in checkpoint['state_dict'].items():
+        fixed_state_dict[k.replace('model._orig_mod.', '')] = v
     
-    model.load_state_dict(fixed_state_dict)
     model.eval()
     return model, tokenizer
 
-def generate_text(prompt, max_length=50, temperature=1):
+def generate_text(prompt, max_length=50, temperature=0.7):
     model, tokenizer = load_model_and_tokenizer()
     inputs = tokenizer(prompt, return_tensors="pt").to(model.lm_head.weight.device)
     generated = model.generate(inputs.input_ids, 
@@ -41,4 +40,4 @@ def generate_text(prompt, max_length=50, temperature=1):
     return tokenizer.decode(generated[0], skip_special_tokens=True)
 
 if __name__ == "__main__":
-    print(generate_text("The sky is "))
+    print(generate_text("The meaning of life is"))

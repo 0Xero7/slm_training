@@ -4,7 +4,9 @@ import torch
 from torch.utils.data import DataLoader
 
 def LoadWikiText103(max_seq_len, batch_size):
-    dataset = load_dataset("wikitext", "wikitext-2-raw-v1")
+    dataset = load_dataset("wikitext", "wikitext-103-raw-v1")
+    # dataset = load_dataset("HuggingFaceFW/fineweb-edu", name="sample-10BT", streaming=True)
+
     # For demonstration, we use a subset of the training and validation splits.
     print(len(dataset["validation"]["text"]))
     

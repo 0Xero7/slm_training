@@ -1,38 +1,14 @@
+import torch
+from transformers import AutoTokenizer
 import time
 import math
 import torch
-import torch.nn as nn
-import torch.optim as optim
 import pytorch_lightning as pl
-from transformers import AutoTokenizer
+import torch.nn as nn
 import numpy as np
-
-# Custom imports for your dataset/model modules.
-import WikiText103Loader as wiki
 from Blocks import LanguageModel, TransformerBlock
+import torch.optim as optim
 
-# -----------------------------------------------------------
-#                      HYPER PARAMETERS
-# -----------------------------------------------------------
-max_seq_len = 128
-d_model = 768
-num_layers = 12
-ff_hidden = 2048
-lr = 0.0002363235740126483  
-num_epochs = 20
-batch_size = 128
-grad_clip = 0.5  
-weight_decay = 0.0009335091136195712
-use_experimental = True
-
-# -----------------------------------------------------------
-# Data Preparation using WikiText-103 (or WikiText-2 for budget)
-# -----------------------------------------------------------
-tokenizer, vocab_size, train_dataset, valid_dataset, train_loader, valid_loader = wiki.LoadWikiText103(max_seq_len, batch_size)
-
-# -----------------------------------------------------------
-# PyTorch Lightning Module with Updated Epoch Hooks
-# -----------------------------------------------------------
 class LitLanguageModel(pl.LightningModule):
     def __init__(self, vocab_size, d_model, num_layers, ff_hidden, max_seq_len, lr, weight_decay, num_epochs, use_experimental):
         super().__init__()
@@ -47,8 +23,8 @@ class LitLanguageModel(pl.LightningModule):
             use_experimental=use_experimental
         )
         # Optionally compile the model if using PyTorch 2.0+
-        if hasattr(torch, "compile"):
-            self.model = torch.compile(self.model)
+        # if hasattr(torch, "compile"):
+        #     self.model = torch.compile(self.model)
         self.criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
         self.epoch_start_time = None
 
@@ -119,49 +95,52 @@ class LitLanguageModel(pl.LightningModule):
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=lr/10)
         return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
-# Make sure vocab_size is available in hyperparameters
-lit_model = LitLanguageModel(
-    vocab_size=vocab_size,
-    d_model=d_model,
-    num_layers=num_layers,
-    ff_hidden=ff_hidden,
-    max_seq_len=max_seq_len,
-    lr=lr,
-    weight_decay=weight_decay,
-    num_epochs=num_epochs,
-    use_experimental=use_experimental
-)
-lit_model.hparams.vocab_size = vocab_size
 
-# -----------------------------------------------------------
-# Trainer Setup with Callbacks
-# -----------------------------------------------------------
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+# Load the tokenizer (make sure to use the same tokenizer you used during training)
+tokenizer = AutoTokenizer.from_pretrained("gpt2")  # or your custom tokenizer if applicable
 
-checkpoint_callback = ModelCheckpoint(
-    monitor="val_loss",
-    mode="min",
-    save_top_k=1,
-    filename="best_model"
-)
-early_stop_callback = EarlyStopping(
-    monitor="val_loss",
-    patience=3,
-    mode="min"
-)
+# Load your trained model checkpoint
+ckpt_path = "lightning_logs/version_5/checkpoints/best_model.ckpt"
+model = LitLanguageModel.load_from_checkpoint(ckpt_path, strict=False)
+model.eval()
 
-trainer = pl.Trainer(
-    # resume_from_checkpoint="lightning_logs/version_0/checkpoints/best_model.ckpt",
-    max_epochs=num_epochs,
-    gradient_clip_val=grad_clip,  # Use automatic gradient clipping
-    callbacks=[checkpoint_callback, early_stop_callback],
-    precision="bf16-mixed",  # Options: "bf16", 16 (fp16), or 32 (default)
-    accelerator="gpu" if torch.cuda.is_available() else "cpu",
-    devices=1 if torch.cuda.is_available() else None,
-    log_every_n_steps=50,
-)
 
-# -----------------------------------------------------------
-# Start Training
-# -----------------------------------------------------------
-trainer.fit(lit_model, train_dataloaders=train_loader, val_dataloaders=valid_loader,  ckpt_path="lightning_logs/version_0/checkpoints/best_model.ckpt")
+
+# If using GPU, move the model to CUDA
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# Define your prompt
+prompt = "The sky is"
+input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+
+# Set the number of tokens to generate
+max_generated_tokens = 50
+
+# Start with the prompt tokens
+generated_ids = input_ids.clone()
+
+# Autoregressive generation loop
+for _ in range(max_generated_tokens):
+    # Get model outputs (shape: [batch, sequence_length, vocab_size])
+    outputs = model(generated_ids)
+    # Extract logits for the last token in the sequence
+    next_token_logits = outputs[:, -1, :]
+    
+    # Greedy decoding: choose the token with the highest probability
+    next_token_id = torch.argmax(next_token_logits, dim=-1, keepdim=True)
+    
+    # Alternatively, you can use sampling:
+    # probs = torch.softmax(next_token_logits, dim=-1)
+    # next_token_id = torch.multinomial(probs, num_samples=1)
+    
+    # Append the predicted token to the sequence
+    generated_ids = torch.cat((generated_ids, next_token_id), dim=1)
+    
+    # Optional: stop if an end-of-sequence token is generated
+    if next_token_id.item() == tokenizer.eos_token_id:
+        break
+
+# Decode the generated token ids back into text
+generated_text = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+print("Generated Text:\n", generated_text)

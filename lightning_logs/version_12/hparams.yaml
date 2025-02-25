@@ -1,10 +1,9 @@
-d_model: 492
-dropout: 0.1695626786397183
+d_model: 768
 ff_hidden: 2048
-lr: 0.0002481948026795471
+lr: 5.0e-06
 max_seq_len: 128
-num_epochs: 20
+num_epochs: 1
 num_layers: 12
 use_experimental: true
 vocab_size: 50258
-weight_decay: 0.0013073512727616423
+weight_decay: 0.0009335091136195712

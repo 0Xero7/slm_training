@@ -13,8 +13,8 @@ from transformers import AutoTokenizer
 
 # import EnchancedTextDataset
 import TripletAttention as ta
-import ClassicalMHA as cm
-import STPAttention as sa
+# import ClassicalMHA as cm
+# import STPAttention as sa
 
 # ---------------------------
 # Model Components with Dropout

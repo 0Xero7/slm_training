@@ -21,7 +21,7 @@ def load_model_and_tokenizer():
         dropout=0.2
     ).to(device)
     
-    checkpoint = torch.load("/workspace/slm_training/lightning_logs/version_5/checkpoints/best_model.ckpt", map_location=device, weights_only=True)
+    checkpoint = torch.load("112MFinewebEdu10B/i0af8q66/checkpoints/step-step=66000-val_loss-val_loss=4.0876.ckpt", map_location=device, weights_only=True)
     
     # Remove '_orig_mod.' prefix from compiled model keys
     fixed_state_dict = {}

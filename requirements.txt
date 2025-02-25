@@ -1,6 +1,7 @@
 tqdm
 datasets
 transformers
+wandb
 pytorch_lightning
 optuna
 optuna-integration[pytorch_lightning]

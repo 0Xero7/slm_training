@@ -15,13 +15,13 @@ from Blocks import LanguageModel, TransformerBlock
 # -----------------------------------------------------------
 #                      HYPER PARAMETERS
 # -----------------------------------------------------------
-max_seq_len = 256
+max_seq_len = 128
 d_model = 768
 num_layers = 12
 ff_hidden = 2048
-lr = 1e-5
+lr = 2e-5
 num_epochs = 1
-batch_size = 64
+batch_size = 128
 grad_clip = 0.5  
 weight_decay = 0.0009335091136195712
 use_experimental = True
@@ -134,6 +134,7 @@ class LitLanguageModel(pl.LightningModule):
             {'params': decay_params, 'weight_decay': weight_decay},
             {'params': no_decay_params, 'weight_decay': 0.0}
         ]
+        # new_lr = 2e-6  # ~1/3 of where you ended
         optimizer = optim.AdamW(optim_groups, lr=lr, betas=(0.9, 0.95))
         # Calculate total steps
         total_steps = len(train_dataset) // batch_size * self.trainer.max_epochs
@@ -145,6 +146,11 @@ class LitLanguageModel(pl.LightningModule):
             pct_start=0.05,  # 5% warmup
             anneal_strategy='cos'
         )
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        #     optimizer,
+        #     T_max=len(train_dataset) // batch_size * trainer.max_epochs,
+        #     eta_min=1e-7  # About 1/30 of your final learning rate
+        # )
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "step"}}
 
 # Make sure vocab_size is available in hyperparameters
@@ -176,17 +182,17 @@ checkpoint_callback2 = ModelCheckpoint(
     filename="step-{step}-val_loss-{val_loss:.4f}"
 )
 
-early_stop_callback = EarlyStopping(
-    monitor="val_loss",
-    patience=3,
-    mode="min"
-)
+# early_stop_callback = EarlyStopping(
+#     monitor="val_loss",
+#     patience=3,
+#     mode="min"
+# )
 
 trainer = pl.Trainer(
     max_epochs=num_epochs,
     logger=wandb_logger,
     gradient_clip_val=grad_clip,  # Use automatic gradient clipping
-    callbacks=[checkpoint_callback2, early_stop_callback],
+    callbacks=[checkpoint_callback2], #, early_stop_callback], NEVER STOP! IT AIN'T OVER TILL ITS OVER!
     precision="bf16-mixed",  # Options: "bf16", 16 (fp16), or 32 (default)
     accelerator="gpu" if torch.cuda.is_available() else "cpu",
     devices=1 if torch.cuda.is_available() else None,
@@ -197,5 +203,5 @@ trainer = pl.Trainer(
 # -----------------------------------------------------------
 # Start Training
 # -----------------------------------------------------------
-trainer.fit(lit_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
-            # ckpt_path='112MFinewebEdu10B/jcdgnaz8/checkpoints/step-step=12000-train_loss-train_loss=4.9217.ckpt')
+trainer.fit(lit_model, train_dataloaders=train_loader, val_dataloaders=valid_loader,)
+            # ckpt_path='112MFinewebEdu10B/2xyfg99m/checkpoints/step-step=53000-val_loss-val_loss=4.3139.ckpt')

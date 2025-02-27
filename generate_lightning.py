@@ -263,7 +263,7 @@ def fix_compiled_checkpoint(state_dict):
     return new_state_dict
 
 # Load the checkpoint
-ckpt_path = "112MFinewebEdu10B/i0af8q66/checkpoints/step-step=66000-val_loss-val_loss=4.0876.ckpt"
+ckpt_path = "112MFinewebEdu10B/4vg0gra1/checkpoints/step-step=72000-val_loss-val_loss=4.2726.ckpt"
 # ckpt_path = "lightning_logs/version_12/checkpoints/step-step=30000-train_loss-train_loss=5.3039.ckpt"
 checkpoint = torch.load(ckpt_path, map_location="cpu")
 
@@ -276,7 +276,7 @@ hparams = {
     "d_model": 768,
     "num_layers": 12,
     "ff_hidden": 2048,
-    "max_seq_len": 1024,
+    "max_seq_len": 128,
     "lr": 3e-5,
     "weight_decay": 0.0009335091136195712,
     "num_epochs": 1,  # used during training
@@ -297,15 +297,17 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 # Define your prompt
-prompt = "Complete the sentence: The people are walking in the street with marching band. The men in green vest are walking on both sides of the parade. the man in neon green jacket"
+prompt = "The people are walking in the street with marching band. The men in green vest are walking on both sides of the parade. the man in neon green jacket"
+prompt = "The meaning of life is"
 input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
 # Set the number of tokens to generate
 max_generated_tokens = 100
-temperature = 0.7  # lower temperature for less randomness; adjust as needed
+temperature = 0.8  # lower temperature for less randomness; adjust as needed
 
 generated_ids = input_ids.clone()
 
+print(prompt)
 for _ in range(max_generated_tokens):
     outputs = model(generated_ids)
     next_token_logits = outputs[:, -1, :]

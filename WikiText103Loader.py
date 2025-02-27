@@ -155,8 +155,8 @@ def LoadFineWeb10B_Stream_OnTheFly(max_seq_len, batch_size, validation_split=0.1
     
     # Create DataLoaders.
     train_loader = DataLoader(train_dataset, batch_size=batch_size, 
-                              collate_fn=custom_collate_fn, num_workers=4)
+                              collate_fn=custom_collate_fn, num_workers=4, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, 
-                              collate_fn=custom_collate_fn, num_workers=4)
+                              collate_fn=custom_collate_fn, num_workers=4, shuffle=False)
     
     return tokenizer, vocab_size, train_dataset, valid_dataset, train_loader, valid_loader
